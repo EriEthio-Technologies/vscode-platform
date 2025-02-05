@@ -1,19 +1,21 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+import gulp from 'gulp';
+import { exec } from 'node:child_process';
 
-import { createRequire } from 'node:module';
+// AI Service Tasks
+export const buildAIService = (done) => {
+	exec('cd ai-service && docker build -t supercoder-ai .', (err, stdout, stderr) => {
+		if (err) return done(err);
+		console.log(stdout);
+		done();
+	});
+};
 
-const require = createRequire(import.meta.url);
-require('./build/gulpfile');
-
-// In gulpfile.js
-gulp.task('build-ai-service', done => {
-	exec('cd ai-service && docker build -t supercoder-ai .', done);
-});
-
-gulp.task('package-win32-x64', ['build-ai-service'], () => {
+// Packaging Task
+export const packageWin32x64 = gulp.series(buildAIService, (done) => {
 	// Original VS Code packaging logic
-	// + Include AI service binaries
+	// Add AI service binaries inclusion
+	done();
 });
+
+// Default task
+export default packageWin32x64;

@@ -1,3 +1,20 @@
+# Project Name
+
+## Overview
+Brief description of the project.
+
+## Installation
+
+### Prerequisites
+- Docker
+- Python 3.9
+
+### Steps
+1. Clone the repository:
+   ```sh
+   git clone https://github.com/yourusername/vscode-platform.git
+   cd vscode-platform
+
 # Visual Studio Code - Open Source ("Code - OSS")
 
 [![Feature Requests](https://img.shields.io/github/issues/microsoft/vscode/feature-request.svg)](https://github.com/microsoft/vscode/issues?q=is%3Aopen+is%3Aissue+label%3Afeature-request+sort%3Areactions-%2B1-desc)

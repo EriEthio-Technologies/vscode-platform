@@ -1,0 +1,16 @@
+# ai-service/config/models.yaml
+models:
+  deepseek:
+    path: "/models/deepseek"
+    quantization: 4bit
+    max_token_length: 4096
+
+  qwen:
+    path: "/models/qwen"
+    quantization: 8bit
+    max_token_length: 8192
+
+  kimi:
+    path: "/models/kimi"
+    quantization: 4bit
+    max_token_length: 200000

@@ -1,0 +1,6 @@
+# triton/models/deepseek/config.pbtxt
+platform: "pytorch_libtorch"
+max_batch_size: 4
+instance_group [
+  { count: 2, kind: KIND_GPU }
+]

@@ -1,0 +1,13 @@
+# ai-service/requirements.txt
+fastapi>=0.110.0
+uvicorn>=0.29.0
+transformers>=4.40.0
+accelerate>=0.30.0
+bitsandbytes>=0.43.0
+langchain-chroma>=0.1.0
+sentence-transformers>=3.0.0
+python-dotenv>=1.0.0
+semgrep>=1.0.0
+bitsandbytes>=0.43.0
+optimum>=1.20.0
+auto-gptq>=0.7.0  # For GPTQ models

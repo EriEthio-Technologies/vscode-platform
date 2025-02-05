@@ -1,0 +1,6 @@
+<!-- src/vs/editor/contrib/ai/browser/aiGutter.css -->
+.ai-gutter {
+  position: absolute;
+  right: 0;
+  background: var(--vscode-editor-background);
+}

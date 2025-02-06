@@ -4,6 +4,19 @@ Welcome, and thank you for your interest in contributing to VS Code!
 
 There are several ways in which you can contribute, beyond writing code. The goal of this document is to provide a high-level overview of how you can get involved.
 
+# Contributing to vscode-platform
+
+We welcome contributions to vscode-platform! Please follow these guidelines when contributing:
+
+1.  **Fork the repository** on GitHub.
+2.  **Create a new branch** for your feature or bug fix.
+3.  **Make your changes** and commit them with clear, concise commit messages.
+4.  **Test your changes** thoroughly.
+5.  **Submit a pull request** to the `main` branch.
+
+Please ensure that your code follows the project's coding style and that all tests pass before submitting a pull request.
+
+
 ## Asking Questions
 
 

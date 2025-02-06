@@ -11,6 +11,8 @@ import sqlite3
 import asyncio
 from ai_service.model_router import ModelRouter
 from scripts.train_model_selection_model import train_model_selection_model
+from sse_starlette.sse import EventSourceResponse
+import time
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -145,6 +147,18 @@ settings = load_settings()
 current_strategy = settings["strategy"]
 selected_model = settings["model"]
 
+async def model_update_process():
+    """
+    Simulates the model update process and yields progress updates.
+    """
+    total_steps = 10
+    for i in range(total_steps):
+        await asyncio.sleep(1)  # Simulate a step in the update process
+        progress = int((i + 1) / total_steps * 100)
+        yield {"data": {"progress": progress, "message": f"Updating model: {progress}%"}}
+    # After the loop, yield a completion message
+    yield {"data": {"progress": 100, "message": "Model update completed successfully."}}
+
 async def update_model_selection_model():
     """
     Updates the model selection model by retraining it.
@@ -179,17 +193,13 @@ async def startup_event():
     asyncio.create_task(periodic_model_update())
 
 # New endpoint to trigger model update manually
-@app.post("/update_model")
+@app.get("/update_model")
 async def update_model():
     """
-    Triggers a manual update of the model selection model.
+    Triggers a manual update of the model selection model and streams progress.
     """
-    try:
-        await update_model_selection_model()
-        return {"message": "Model update triggered successfully."}
-    except Exception as e:
-        logging.error(f"Error triggering model update: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to trigger model update")
+    logging.info("Manual model update triggered")
+    return EventSourceResponse(model_update_process())
 
 # Endpoint to get available models
 @app.get("/models", response_model=List[str])

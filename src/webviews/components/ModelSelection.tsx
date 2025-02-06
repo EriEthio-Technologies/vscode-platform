@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Select, Option } from "@material-tailwind/react";
+import { Select, Option, Button, Typography, Progress } from "@material-tailwind/react";
 import axios from 'axios';
 
 interface ModelSelectionProps {
@@ -16,6 +16,10 @@ const ModelSelection: React.FC<ModelSelectionProps> = ({ onStrategyChange, onMod
     const [availableModels, setAvailableModels] = useState<string[]>([]);
     const [modelMappings, setModelMappings] = useState<{ [key: string]: string }>({});
     const [currentModel, setCurrentModel] = useState(propCurrentModel || '');
+    const [updateButtonLoading, setUpdateButtonLoading] = useState(false);
+    const [updateStatus, setUpdateStatus] = useState<string | null>(null);
+    const [updateProgress, setUpdateProgress] = useState<number>(0); // 0 to 100
+    const [sseError, setSseError] = useState<string | null>(null);
 
     useEffect(() => {
         setIsManual(selectedStrategy === 'manual');
@@ -40,6 +44,7 @@ const ModelSelection: React.FC<ModelSelectionProps> = ({ onStrategyChange, onMod
             })
             .catch(error => {
                 console.error("Error fetching settings:", error);
+                setUpdateStatus("Error fetching settings.");
             });
 
         // Fetch available models from the backend
@@ -49,6 +54,7 @@ const ModelSelection: React.FC<ModelSelectionProps> = ({ onStrategyChange, onMod
             })
             .catch(error => {
                 console.error("Error fetching available models:", error);
+                setUpdateStatus("Error fetching available models.");
             });
 
         // Fetch model name mappings from the backend
@@ -58,6 +64,7 @@ const ModelSelection: React.FC<ModelSelectionProps> = ({ onStrategyChange, onMod
             })
             .catch(error => {
                 console.error("Error fetching model mappings:", error);
+                setUpdateStatus("Error fetching model mappings.");
             });
     }, [onStrategyChange, onModelChange]);
 
@@ -68,9 +75,11 @@ const ModelSelection: React.FC<ModelSelectionProps> = ({ onStrategyChange, onMod
                 console.log(response.data.message);
                 setIsManual(value === 'manual');
                 onStrategyChange(value);
+                setUpdateStatus(response.data.message);
             })
             .catch(error => {
                 console.error("Error setting strategy:", error);
+                setUpdateStatus("Error setting strategy.");
             });
         setSelectedModel(''); // Reset selected model when strategy changes
         onModelChange('');
@@ -84,10 +93,51 @@ const ModelSelection: React.FC<ModelSelectionProps> = ({ onStrategyChange, onMod
                 console.log(response.data.message);
                 onModelChange(value);
                 setCurrentModel(value);
+                setUpdateStatus(response.data.message);
             })
             .catch(error => {
                 console.error("Error setting model:", error);
+                setUpdateStatus("Error setting model.");
             });
+    };
+
+    const handleUpdateModel = () => {
+        setUpdateButtonLoading(true);
+        setUpdateStatus("Updating model...");
+        setUpdateProgress(0);
+        setSseError(null);
+
+        const eventSource = new EventSource('http://localhost:8000/update_model');
+
+        eventSource.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                setUpdateProgress(data.progress);
+                setUpdateStatus(data.message);
+                setSseError(null);
+            } catch (error) {
+                console.error("Error parsing SSE data:", error);
+                setUpdateStatus("Error parsing update data.");
+                setSseError("Error parsing update data.");
+                eventSource.close();
+            }
+        };
+
+        eventSource.onerror = (error) => {
+            console.error("SSE error:", error);
+            setUpdateStatus("Error updating model. Check console for details.");
+            setSseError("Error updating model. Check console for details.");
+            setUpdateButtonLoading(false);
+            eventSource.close();
+        };
+
+        eventSource.onclose = () => {
+            console.log("SSE connection closed.");
+            setUpdateButtonLoading(false);
+            if (!sseError && updateProgress < 100) {
+                setUpdateStatus("Update process completed, but progress may not be complete.");
+            }
+        };
     };
 
     return (
@@ -140,6 +190,24 @@ const ModelSelection: React.FC<ModelSelectionProps> = ({ onStrategyChange, onMod
                         value={currentModel}
                         disabled
                     />
+                </div>
+            )}
+
+            <Button variant="gradient" color="blue" onClick={handleUpdateModel} disabled={updateButtonLoading}>
+                {updateButtonLoading ? "Updating..." : "Update Model"}
+            </Button>
+
+            {updateStatus && (
+                <div className="mt-4">
+                    <Typography variant="small" color={sseError ? "red" : "green"}>
+                        {updateStatus}
+                    </Typography>
+                </div>
+            )}
+
+            {updateButtonLoading && (
+                <div className="mt-4">
+                    <Progress value={updateProgress} color="blue" />
                 </div>
             )}
         </div>

@@ -1,28 +1,60 @@
+import tiktoken
+import subprocess
 import logging
-import hashlib
+import re
 
-def encode(prompt: str):
+def encode(text: str) -> list[int]:
     """
-    Mock implementation of the encode function.
+    Encodes a string of text into tokens using the tiktoken library.
     """
-    logging.info(f"Encoding prompt: {prompt[:50]}...")
-    # In a real implementation, this would use a model to generate an embedding
-    # For the mock, return a hash of the prompt
-    return hashlib.sha256(prompt.encode()).hexdigest()
+    logging.info(f"Encoding text: {text[:50]}...")
+    enc = tiktoken.get_encoding("cl100k_base")
+    return enc.encode(text)
 
-def calculate_cyclomatic_complexity(code: str):
+def calculate_cyclomatic_complexity(code: str) -> int:
     """
-    Mock implementation of the calculate_cyclomatic_complexity function.
+    Calculates the cyclomatic complexity of a given code snippet.
     """
-    logging.info(f"Calculating cyclomatic complexity for code: {code[:50]}...")
-    # In a real implementation, this would parse the code and calculate the complexity
-    # For the mock, return a fixed value based on the length of the code
-    return len(code) // 100 + 1
+    logging.info("Calculating cyclomatic complexity...")
+    try:
+        # Save the code to a temporary file
+        with open("temp_code.py", "w") as f:
+            f.write(code)
 
-def sanitize(code: str):
+        # Run lizard command on the temporary file
+        result = subprocess.run(["lizard", "temp_code.py"], capture_output=True, text=True)
+
+        # Extract the complexity value from the output
+        output_lines = result.stdout.splitlines()
+        if len(output_lines) > 1:
+            complexity = int(output_lines[1].split()[2])
+        else:
+            complexity = 1  # Default value if parsing fails
+
+        logging.info(f"Cyclomatic complexity: {complexity}")
+        return complexity
+    except Exception as e:
+        logging.error(f"Error calculating cyclomatic complexity: {e}", exc_info=True)
+        return 1
+
+def sanitize(code: str) -> str:
     """
-    Mock implementation of the sanitize function.
+    Sanitizes a given code snippet by removing potentially harmful or unwanted content.
     """
     logging.info("Sanitizing code...")
-    # In a real implementation, this would remove potentially harmful code
-    # For the mock, just replace some characters
+    try:
+        # Remove any comments
+        code = re.sub(r"#.*", "", code)
+
+        # Remove any docstrings
+        code = re.sub(r"\"\"\"[\s\S]*?\"\"\"", "", code)
+        code = re.sub(r"\'\'\'[\s\S]*?\'\'\'", "", code)
+
+        # Remove any blank lines
+        code = "\n".join([line for line in code.splitlines() if line.strip()])
+
+        logging.info("Code sanitized successfully.")
+        return code
+    except Exception as e:
+        logging.error(f"Error sanitizing code: {e}", exc_info=True)
+        return code

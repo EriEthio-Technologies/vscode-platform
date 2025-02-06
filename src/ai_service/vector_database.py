@@ -1,31 +1,49 @@
 import logging
+import chromadb
+from chromadb.utils import embedding_functions
 
 class VectorDatabase:
     """
-    Mock implementation of the VectorDatabase class.
+    Vector database implementation using ChromaDB.
     """
-    def __init__(self, embedding_size: int = 768):
-        self.embedding_size = embedding_size
-        self.data = {}  # Store embeddings and associated code
+    def __init__(self, client_settings=chromadb.Settings(anonymized_telemetry=False)):
+        self.client = chromadb.PersistentClient(path="vsCode_assistant", settings=client_settings)
+        self.embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
+            api_key=None, # can be set to None when used locally
+            model_name="all-mpnet-base-v2"
+        )
+        self.collection = self.client.get_or_create_collection(
+            name="vsCode_assistant_collection",
+            embedding_function=self.embedding_function,
+            metadata={"hnsw:space": "cosine"} # l2 is the default
+        )
+        logging.info("VectorDatabase initialized")
 
-    def query(self, embedding, project_id: str = "default_project", top_k: int = 5):
+    def add(self, embedding, project_id, metadata=None):
         """
-        Mock implementation of the query method.
+        Adds an embedding to the vector database.
         """
-        logging.info(f"Querying vector database for project: {project_id} with embedding: {embedding[:20]}...")
-        # In a real implementation, this would perform a similarity search
-        # For the mock, return some dummy code if the project exists, else an empty string
-        if project_id in self.data:
-            return self.data[project_id]
-        else:
-            return ""
+        if metadata is None:
+            metadata = {}
+        metadata["project_id"] = project_id
+        self.collection.add(
+            embeddings=[embedding],
+            metadatas=[metadata],
+            ids=[str(len(self.collection.get()['ids']))] # Simple incremental ID
+        )
+        logging.info(f"Added embedding to vector database for project: {project_id}")
 
-    def add(self, project_id: str, code: str, embedding):
+    def query(self, embedding, project_id, n_results=5):
         """
-        Mock implementation of adding code and its embedding to the database.
+        Queries the vector database for the most similar embeddings.
         """
-        logging.info(f"Adding code to project: {project_id} with embedding: {embedding[:20]}...")
-        self.data[project_id] = code
+        results = self.collection.query(
+            query_embeddings=[embedding],
+            n_results=n_results,
+            where={"project_id": project_id}
+        )
+        logging.info(f"Queried vector database for project: {project_id}")
+        return results
 
     def __repr__(self):
-        return f"VectorDatabase(embedding_size={self.embedding_size}, data_size={len(self.data)})"
+        return f"VectorDatabase(client={self.client}, collection={self.collection})"
